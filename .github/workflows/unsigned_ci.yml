@@ -1,0 +1,49 @@
+name: unsigned ci
+
+on:
+  push:
+    branches: ["develop"]
+  pull_request:
+    branches: ["develop"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "zulu"
+          cache: gradle
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+          gradle-version: wrapper
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build APKs
+        run: ./gradlew assembleNormalRelease assembleCompatibleRelease
+
+      - name: Upload APK - Compatible
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-compatible
+          path: app/build/outputs/apk/compatible/release/*.apk
+
+      - name: Upload APK - Normal
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-normal
+          path: app/build/outputs/apk/normal/release/*.apk
